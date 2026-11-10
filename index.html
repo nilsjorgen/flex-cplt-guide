@@ -152,8 +152,6 @@
 <h2>2. Install</h2>
 <pre><code>brew install navikt/tap/cplt gh           # cplt + GitHub CLI
 curl -fsSL https://gh.io/copilot-install | bash   # Copilot CLI → ~/.local/bin (add to PATH)</code></pre>
-<p>Alternatively via mise — pin the version, because cplt's version strings aren't semver and <code>mise latest</code> can pick an older release:</p>
-<pre><code>mise use -g 'github:navikt/cplt@&lt;version&gt;'</code></pre>
 <p>Upgrading (do this first when something looks off — many old errors are already fixed):</p>
 <pre><code>brew update &amp;&amp; brew upgrade navikt/tap/cplt
 copilot update
@@ -177,13 +175,16 @@ which -a cplt        # make sure there isn't an old copy shadowing the new one</
 gh auth setup-git</code></pre>
 
 <p><strong>3. Make <code>copilot</code> always run sandboxed</strong> — this is what makes cplt "permanent":</p>
-<pre><code>cplt --shell-install     # adds an alias to ~/.zshrc so 'copilot' = 'cplt --agent copilot'
+<pre><code>
+cplt --shell-install         # Adds shell integratopn to ~/.zshrc
 source ~/.zshrc
-cplt doctor --agent copilot</code></pre>
+cplt doctor --agent copilot
+alias copilot                # Should show copilot='cplt --agent copilot'
+</code></pre>
 <p>The alias only affects interactive shells. If you also want scripts, <code>zsh -c</code> and IDE-launched agents to hit the sandbox, opt in to PATH shims with <code>cplt --shell-install --shims</code> (undo with <code>cplt --shell-uninstall</code>). Note: <code>mise activate</code> placed after the shim block in your rc files can reorder PATH; <code>cplt doctor</code> warns about that.</p>
 
 <p><strong>4. Install toolchains outside cplt.</strong> The sandbox deliberately can't write to mise's install directory, so a missing version fails inside cplt. In each repo, once:</p>
-<pre><code>mise install          # install the versions in mise.toml / .tool-versions
+<pre><code>
 ./gradlew build       # first run outside cplt: downloads the wrapper distribution and any toolchain JDK</code></pre>
 <div class="callout warn"><strong>JDK location</strong>JDKs in <code>~/Library/Java/JavaVirtualMachines</code> (where IntelliJ downloads them) are <em>not</em> supported yet. Point <code>JAVA_HOME</code> at a mise, SDKMAN or <code>/Library/Java/JavaVirtualMachines</code> JDK instead.</div>
 
