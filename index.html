@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cplt – The Flex Guide</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+<style>
+  :root { --pico-font-size: 100%; }
+  body > header, body > main, body > footer { max-width: 980px; margin-inline: auto; }
+  header.hero { padding-top: 2.5rem; padding-bottom: 0.5rem; }
+  header.hero h1 { margin-bottom: .25rem; }
+  header.hero p { color: var(--pico-muted-color); }
+  .toc article { padding: 1.25rem 1.5rem; }
+  .toc h4 { margin-bottom: .75rem; }
+  .toc-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; }
+  .toc-item { display: flex; gap: .6rem; align-items: baseline; padding: .35rem 0;
+    border-bottom: 1px solid var(--pico-muted-border-color); }
+  .toc-num { flex: 0 0 2.2rem; color: var(--pico-muted-color); font-weight: 600;
+    font-variant-numeric: tabular-nums; }
+  .toc-item a { text-decoration: none; }
+  .toc-item a:hover { text-decoration: underline; }
+  .toc-sub { padding-left: 1.5rem; font-size: .9rem; }
+  .toc-sub .toc-num { flex-basis: 2.2rem; font-weight: 500; }
+  .toc-col { display: flex; flex-direction: column; }
+  @media (max-width: 720px) { .toc-list { grid-template-columns: 1fr; } }
+  section { scroll-margin-top: 1rem; margin-bottom: 3rem; }
+  h2 { border-bottom: 2px solid var(--pico-primary-background); padding-bottom: .3rem; margin-top: 1rem; }
+  h3 { margin-top: 2rem; }
+  pre { position: relative; padding: 1rem 1rem; font-size: .85rem; }
+  pre code { padding: 0; white-space: pre; }
+  pre button.copy { position: absolute; top: .4rem; right: .4rem; padding: .15rem .55rem; font-size: .7rem;
+    width: auto; margin: 0; opacity: .55; }
+  pre:hover button.copy { opacity: 1; }
+  .callout { border-left: 4px solid; padding: .8rem 1rem; border-radius: 6px; margin: 1rem 0;
+    background: var(--pico-card-background-color); }
+  .callout > :last-child { margin-bottom: 0; }
+  .callout.info { border-color: #3b82f6; }
+  .callout.warn { border-color: #f59e0b; }
+  .callout.danger { border-color: #ef4444; }
+  .callout strong:first-child { display: block; margin-bottom: .2rem; }
+  details { border: 1px solid var(--pico-muted-border-color); border-radius: 8px; padding: .6rem 1rem; margin-bottom: .6rem; }
+  details[open] { padding-bottom: 1rem; }
+  details summary { font-weight: 600; }
+  details summary code { font-weight: 500; }
+  .tag { display: inline-block; font-size: .7rem; font-weight: 600; padding: .05rem .45rem; border-radius: 999px;
+    background: var(--pico-secondary-background); color: var(--pico-secondary-inverse); vertical-align: middle; margin-left: .3rem; }
+  .tag.force { background: #b91c1c; color: #fff; }
+  table { font-size: .9rem; }
+  td code, li code, p code { white-space: nowrap; }
+  footer { padding-bottom: 3rem; font-size: .85rem; color: var(--pico-muted-color); }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+  .grid-3 article { margin: 0; }
+  .grid-3 article h4 { margin-bottom: .4rem; }
+</style>
+</head>
+<body>
+
+<header class="container hero">
+  <h1>cplt — The Short Guide</h1>
+  <p>Running GitHub Copilot CLI in the cplt sandbox on macOS, for a Spring Boot + Gradle backend, with the IntelliJ MCP server. Condensed from the Nav docs and the cplt README (November 2026).</p>
+</header>
+
+<main class="container">
+
+<aside class="toc">
+  <article>
+    <h4>Contents</h4>
+    <div class="toc-list">
+      <div class="toc-col">
+        <div class="toc-item"><span class="toc-num">1</span><a href="#what">What cplt is and how it works</a></div>
+        <div class="toc-item"><span class="toc-num">2</span><a href="#install">Install</a></div>
+        <div class="toc-item"><span class="toc-num">3</span><a href="#setup">Setup: Copilot CLI + Gradle + Spring Boot</a></div>
+        <div class="toc-item toc-sub"><span class="toc-num">3.1</span><a href="#machine">One-time machine setup</a></div>
+        <div class="toc-item toc-sub"><span class="toc-num">3.2</span><a href="#personal">Personal baseline config</a></div>
+        <div class="toc-item toc-sub"><span class="toc-num">3.3</span><a href="#repo">Per-repo config (.cplt.toml)</a></div>
+        <div class="toc-item toc-sub"><span class="toc-num">3.4</span><a href="#intellij">IntelliJ MCP server</a></div>
+        <div class="toc-item toc-sub"><span class="toc-num">3.5</span><a href="#daily">Daily use &amp; copying text</a></div>
+      </div>
+      <div class="toc-col">
+        <div class="toc-item"><span class="toc-num">4</span><a href="#git">Git &amp; GitHub in the sandbox</a></div>
+        <div class="toc-item"><span class="toc-num">5</span><a href="#packages">Private packages (GitHub Packages)</a></div>
+        <div class="toc-item"><span class="toc-num">6</span><a href="#docker">Docker &amp; Testcontainers</a></div>
+        <div class="toc-item"><span class="toc-num">7</span><a href="#allowlist">Allowlist / strict mode</a></div>
+        <div class="toc-item"><span class="toc-num">8</span><a href="#trouble">Troubleshooting blocked resources</a></div>
+        <div class="toc-item"><span class="toc-num">9</span><a href="#cheat">Cheat sheet</a></div>
+      </div>
+    </div>
+  </article>
+</aside>
+
+<!-- ============================================================ -->
+<section id="what">
+<h2>1. What cplt is and how it works</h2>
+
+<p><strong>cplt</strong> is a wrapper that starts your AI agent (here: GitHub Copilot CLI) inside a <strong>kernel-enforced sandbox</strong>. The agent can read, write and run things in your project, but it cannot read your secrets, push to <code>main</code>, merge PRs or send data wherever it likes. Every restriction also applies to every process the agent starts (Gradle, the JVM, <code>git</code>, <code>curl</code> …). At Nav, sandboxing is required for AI agent work on Nav equipment; cplt is the recommended way to do it.</p>
+
+<p>It has three layers:</p>
+<div class="grid-3">
+  <article>
+    <h4>① Kernel sandbox</h4>
+    <p>On macOS cplt generates an Apple Seatbelt profile and runs the agent under <code>sandbox-exec</code>. This controls file access, what may be executed, and which ports may be used. It cannot be talked around by a prompt.</p>
+  </article>
+  <article>
+    <h4>② Network proxy</h4>
+    <p>A local CONNECT proxy filters and logs HTTPS traffic. By default it lets everything through <em>except</em> a built-in list of known exfiltration hosts and hosts that resolve to private IPs. Only port 443 is open.</p>
+  </article>
+  <article>
+    <h4>③ Command guards</h4>
+    <p>Wrappers around <code>git</code> and <code>gh</code>. The <em>git guard</em> blocks pushes to the default branch and force pushes. The <em>gh guard</em> blocks <code>gh pr merge</code>, repo deletion, etc., and keeps <code>gh</code> scoped to the current repo.</p>
+  </article>
+</div>
+
+<h3>What is blocked by default (macOS)</h3>
+<table>
+  <thead><tr><th>Resource</th><th>Default</th></tr></thead>
+  <tbody>
+    <tr><td>Project directory</td><td>✅ read / write / execute</td></tr>
+    <tr><td><code>~/.gradle</code>, <code>~/.m2</code>, mise, SDKMAN, jenv (caches, toolchains)</td><td>✅ allowed (but see token files below)</td></tr>
+    <tr><td><code>~/.gitconfig</code>, <code>~/.config/git/config|ignore|attributes</code></td><td>✅ read-only — <em>but not files they <code>include</code></em></td></tr>
+    <tr><td><code>~/.gradle/gradle.properties</code>, <code>~/.m2/settings.xml</code>, <code>~/.npmrc</code></td><td>🔒 blocked (contain registry tokens)</td></tr>
+    <tr><td><code>.env*</code>, <code>.pem</code>, <code>.key</code> inside the project</td><td>🔒 blocked (read and write)</td></tr>
+    <tr><td><code>~/.ssh</code>, <code>~/.gnupg</code>, <code>~/.aws</code>, <code>~/.kube</code>, <code>~/.docker</code>, <code>~/.nais</code> …</td><td>🔒 blocked</td></tr>
+    <tr><td>Writing <code>.git/config</code>, <code>.git/hooks</code></td><td>🔒 blocked</td></tr>
+    <tr><td>Executing from <code>/tmp</code>, <code>/var/folders</code>, <code>~/Library/Caches</code></td><td>🔒 blocked (cplt gives the session its own scratch <code>TMPDIR</code>)</td></tr>
+    <tr><td>Outbound connections to <strong>localhost</strong></td><td>🔒 blocked</td></tr>
+    <tr><td>Outbound network, port 443</td><td>✅ allowed via proxy (other ports blocked)</td></tr>
+    <tr><td>Hosts resolving to private IPs (e.g. <code>*.intern.nav.no</code>)</td><td>🔒 blocked by proxy</td></tr>
+    <tr><td>Docker socket, SSH agent, clipboard</td><td>🔒 blocked</td></tr>
+    <tr><td>Environment variables</td><td>Only a safe allowlist passes; anything ending in <code>_TOKEN</code>, <code>_SECRET</code>, <code>_KEY</code>, <code>_PASSWORD</code> … is stripped. <code>GH_TOKEN</code>/<code>GITHUB_TOKEN</code> pass to Copilot if set.</td></tr>
+  </tbody>
+</table>
+
+<h3>Where configuration lives</h3>
+<ul>
+  <li><strong>Personal / machine config</strong>: <code>~/.config/cplt/config.toml</code>. Written by <code>cplt config set …</code> (or the interactive <code>cplt settings</code>). The agent cannot read or edit it.</li>
+  <li><strong>Per-repo team policy</strong>: <code>.cplt.toml</code> in the repo root, committed to git. cplt reads it from <strong>git HEAD</strong>, not your working tree, so the agent can't loosen its own sandbox mid-session.
+    <ul>
+      <li><code>[deny]</code> only tightens; applied automatically.</li>
+      <li><code>[propose]</code> loosens; does nothing until each developer runs <code>cplt trust accept</code>. Any change to the block invalidates the approval.</li>
+    </ul>
+  </li>
+  <li><strong>CLI flags</strong> (e.g. <code>--allow-localhost 5432</code>) apply for one session only.</li>
+</ul>
+<p>Precedence: CLI flags → personal config → defaults. The repo file is a separate layer that can add approved permissions or deny more, but never switch off something you set. Config changes apply from the <strong>next</strong> session.</p>
+
+<div class="callout info"><strong>Keys marked <span class="tag force">--force</span></strong>Some settings are flagged dangerous (they expose tokens, allow exec from temp, give Docker access …). cplt refuses to set them without <code>--force</code>, and most of them can't be put in <code>.cplt.toml</code>.</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="install">
+<h2>2. Install</h2>
+<pre><code>brew install navikt/tap/cplt gh           # cplt + GitHub CLI
+curl -fsSL https://gh.io/copilot-install | bash   # Copilot CLI → ~/.local/bin (add to PATH)</code></pre>
+<p>Alternatively via mise — pin the version, because cplt's version strings aren't semver and <code>mise latest</code> can pick an older release:</p>
+<pre><code>mise use -g 'github:navikt/cplt@&lt;version&gt;'</code></pre>
+<p>Upgrading (do this first when something looks off — many old errors are already fixed):</p>
+<pre><code>brew update &amp;&amp; brew upgrade navikt/tap/cplt
+copilot update
+which -a cplt        # make sure there isn't an old copy shadowing the new one</code></pre>
+</section>
+
+<!-- ============================================================ -->
+<section id="setup">
+<h2>3. Setup: Copilot CLI + Gradle + Spring Boot</h2>
+
+<h3 id="machine">3.1 One-time machine setup</h3>
+<p>Run all of this in a normal terminal, <strong>outside</strong> cplt.</p>
+
+<p><strong>1. Log in to GitHub with <code>gh</code></strong> (Copilot and git push both use this login). The sub-shell clears stale token variables so the keychain login is used:</p>
+<pre><code>(unset GH_TOKEN GITHUB_TOKEN COPILOT_GITHUB_TOKEN GH_HOST GH_REPO; gh auth login --hostname github.com --web)
+(unset GH_TOKEN GITHUB_TOKEN COPILOT_GITHUB_TOKEN GH_HOST GH_REPO; gh auth status --hostname github.com)</code></pre>
+<p><code>gh auth status</code> should show the right account and <code>(keyring)</code>. Never use <code>/login</code> inside a sandboxed Copilot session — cplt closes the Keychain, so the login can't be stored.</p>
+
+<p><strong>2. Use HTTPS for GitHub, not SSH</strong> (<code>~/.ssh</code> is blocked in the sandbox):</p>
+<pre><code>git config --global url."https://github.com/".insteadOf "git@github.com:"
+gh auth setup-git</code></pre>
+
+<p><strong>3. Make <code>copilot</code> always run sandboxed</strong> — this is what makes cplt "permanent":</p>
+<pre><code>cplt --shell-install     # adds an alias to ~/.zshrc so 'copilot' = 'cplt --agent copilot'
+source ~/.zshrc
+cplt doctor --agent copilot</code></pre>
+<p>The alias only affects interactive shells. If you also want scripts, <code>zsh -c</code> and IDE-launched agents to hit the sandbox, opt in to PATH shims with <code>cplt --shell-install --shims</code> (undo with <code>cplt --shell-uninstall</code>). Note: <code>mise activate</code> placed after the shim block in your rc files can reorder PATH; <code>cplt doctor</code> warns about that.</p>
+
+<p><strong>4. Install toolchains outside cplt.</strong> The sandbox deliberately can't write to mise's install directory, so a missing version fails inside cplt. In each repo, once:</p>
+<pre><code>mise install          # install the versions in mise.toml / .tool-versions
+./gradlew build       # first run outside cplt: downloads the wrapper distribution and any toolchain JDK</code></pre>
+<div class="callout warn"><strong>JDK location</strong>JDKs in <code>~/Library/Java/JavaVirtualMachines</code> (where IntelliJ downloads them) are <em>not</em> supported yet. Point <code>JAVA_HOME</code> at a mise, SDKMAN or <code>/Library/Java/JavaVirtualMachines</code> JDK instead.</div>
+
+<h3 id="personal">3.2 Personal baseline config</h3>
+<div class="callout info"><strong>What belongs here</strong>Anything about <em>your machine</em>: paths in your home directory (<code>allow.read</code>/<code>allow.write</code>), machine tools like the IntelliJ MCP port, env vars, the clipboard, logging, and every <span class="tag force">--force</span> setting (token files, temp exec, Docker) — these can't go in <code>.cplt.toml</code> anyway. Each row in the <a href="#cheat">cheat sheet</a> says where it belongs.</div>
+<p>Settings that are about <em>your machine</em> belong in your personal config. A sensible minimum for a Gradle/Spring Boot developer:</p>
+<pre><code># Gradle daemon, Kotlin daemon and Spring Boot dev servers talk over random localhost ports
+cplt config set sandbox.allow_localhost_any true
+
+# MockK / Mockito inline / ByteBuddy attach to the JVM during tests
+cplt config set sandbox.allow_jvm_attach true
+
+# IntelliJ MCP server (see 3.4) – explicit, in case you ever turn allow_localhost_any off
+cplt config set allow.localhost 64342
+
+# Keep a quiet, always-on log of every network connection (grep it when something fails)
+cplt config set proxy.log_file ~/.cache/cplt/proxy.log</code></pre>
+<p>If your <code>~/.gitconfig</code> uses <code>include</code>/<code>includeIf</code> to pull in other files, also grant read access to each included <strong>file</strong> (not the folder) — see <a href="#t-includeif">troubleshooting</a>:</p>
+<pre><code>cplt config set allow.read ~/.config/git/work</code></pre>
+<p>Check the result with <code>cplt config show</code>; remove a value with <code>--unset</code>, e.g. <code>cplt config set allow.read ~/.npmrc --unset</code>.</p>
+<div class="callout info"><strong>What <code>allow_localhost_any</code> costs</strong>The agent can then reach <em>every</em> service listening on localhost, including a local database. If you'd rather not, put it in each repo's <code>.cplt.toml</code> instead (next section) so it only applies there.</div>
+
+<h3 id="repo">3.3 Per-repo config (<code>.cplt.toml</code>)</h3>
+<div class="callout info"><strong>What belongs here</strong>Anything <em>the project</em> needs, so every teammate gets the same sandbox: <code>allow_localhost_any</code> and <code>allow_jvm_attach</code> for Gradle, fixed ports for services from <code>docker compose</code>, internal hosts the build resolves (<code>proxy.allow_private_domains</code>), extra ports. Never paths in someone's home directory, and never Docker. If you put the Gradle settings in your personal config (3.2), they're still worth committing here for the rest of the team. See the <a href="#cheat">cheat sheet</a>.</div>
+<p>For settings the whole team needs, commit a <code>.cplt.toml</code>. Let cplt suggest one:</p>
+<pre><code>cplt init              # preview only, writes nothing</code></pre>
+<p>Review the <code>[propose]</code> block. Commented-out lines refer to files in your home directory and belong in your personal config, not the repo. <strong>Remove <code>allow_docker</code></strong> if it suggests it (see <a href="#docker">Docker</a>). For a Spring Boot + Gradle app with Postgres from <code>docker compose</code>, you typically end up with:</p>
+<pre><code># .cplt.toml
+[propose]
+allow_localhost_any = true   # Gradle/Kotlin daemons use random ports
+allow_jvm_attach   = true    # MockK / Mockito inline
+
+[propose.allow]
+localhost = [5432]           # Postgres from docker compose (redundant with allow_localhost_any, but documents intent)
+
+# Internal Nav hosts the build needs? Add them with:
+#   cplt config set --repo proxy.allow_private_domains repo.adeo.no</code></pre>
+<p>Write, commit and approve:</p>
+<pre><code>cplt init --write
+git add .cplt.toml &amp;&amp; git commit -m "chore: add cplt sandbox config"
+cplt trust accept --all     # each developer runs this once on their machine
+cplt trust show             # what's approved, what's pending</code></pre>
+<p>Adding to an existing file later: <code>cplt config set --repo allow.localhost 5432</code> (writes the proposal) or <code>cplt init --write --merge</code> (adds new findings, removes nothing). Commit, then <code>cplt trust accept</code> again.</p>
+
+<div class="callout info"><strong>Gradle things cplt already handles for you</strong>
+Gradle 8.8+ tries to start its own nested macOS sandbox, which can't run inside cplt — cplt sets <code>GRADLE_MACOS_SANDBOX=off</code> automatically. It also injects proxy settings into <code>JAVA_TOOL_OPTIONS</code>, so Gradle/Maven dependency downloads go through the cplt proxy (and show up in its log).</div>
+
+<h4 id="other-commands">Other agents and sandbox commands</h4>
+<p>From the cplt README — handy for testing whether a build works in the sandbox before you hand it to the agent:</p>
+<pre><code>cplt --agent opencode                       # OpenCode (Copilot subscription)
+cplt --agent opencode --pass-env ANTHROPIC_API_KEY  # third-party provider
+cplt --agent shell                          # interactive sandboxed shell (no AI)
+cplt exec -- npm install                    # sandbox any command directly
+cplt exec -c "npm install &amp;&amp; npm test"      # compound commands in sandbox
+alias npm="cplt exec -- npm"               # sandboxed npm for every invocation</code></pre>
+<p>The Gradle equivalents: <code>cplt exec -- ./gradlew build</code> and <code>cplt exec -c "./gradlew clean test"</code>. Combine with <code>cplt config set proxy.log_level blocked</code> to see exactly what the build is denied.</p>
+
+<h3 id="intellij">3.4 IntelliJ MCP server (SSE)</h3>
+<p>The IntelliJ MCP server is built into IntelliJ IDEA 2025.2+. It listens on localhost (first IDE on port <strong>64342</strong>, a second IDE on 64343, …), which the sandbox blocks by default.</p>
+<ol>
+  <li>In IntelliJ: <strong>Settings → Tools → MCP Server → Enable MCP Server</strong>. Either click <em>Auto-Configure</em> for GitHub Copilot CLI, or use <em>Copy SSE Config</em> and paste it into <code>~/.copilot/mcp-config.json</code>. It ends up looking roughly like:
+<pre><code>{
+  "mcpServers": {
+    "intellij": {
+      "type": "sse",
+      "url": "http://127.0.0.1:64342/sse",
+      "tools": ["*"]
+    }
+  }
+}</code></pre>
+  </li>
+  <li>Open the port in cplt (already in the baseline above):
+<pre><code>cplt config set allow.localhost 64342</code></pre>
+  Use 64343 too if you often have two IntelliJ windows/IDEs open.</li>
+  <li>Start a new session and check the server is listed with <code>/mcp</code> in Copilot.</li>
+</ol>
+<div class="callout danger"><strong>The IntelliJ MCP server runs outside the sandbox</strong>Anything the agent asks IntelliJ to do happens with your full permissions — the cplt docs say the same about any socket you open to a process outside the sandbox. In particular, IntelliJ's <code>execute_terminal_command</code> tool runs commands <em>unsandboxed</em>. Keep IntelliJ's "brave mode" off so it asks for confirmation, and actually read those confirmations. (This is my note, not from the Nav docs.)</div>
+
+<h3 id="daily">3.5 Daily use</h3>
+<pre><code>cd ~/src/my-app
+copilot                          # = cplt --agent copilot (via the alias)
+copilot -p "fix the failing tests"
+cplt --continue                  # resume the most recent session in this directory
+cplt --resume                    # pick a session interactively
+cplt exec -- ./gradlew build     # run any single command in the sandbox (handy for debugging)
+cplt --agent shell               # an interactive sandboxed shell, no AI</code></pre>
+<p>At startup cplt prints a summary of the active rules and asks you to confirm the first time (or when the profile changed). At the end it prints an audit of what the session changed. You can see the full generated profile with <code>cplt --print-profile</code>.</p>
+<p>The line <code>Sandboxing is disabled for this session because this host does not support it</code> from Copilot is expected: Copilot's own sandbox can't nest inside cplt, so cplt switches it off. cplt is still the sandbox.</p>
+
+<h4 id="copy">Copying text from the agent's output</h4>
+<p>Copying from the agent can be awkward. Two things help:</p>
+<ol>
+  <li><strong>Hold <kbd>Fn</kbd> while you select the text</strong>, then press <kbd>⌘</kbd>+<kbd>C</kbd>. This almost always works.</li>
+  <li><strong>Deal with copy-on-select.</strong> Copilot CLI has a built-in copy-on-select, which doesn't work well because cplt blocks clipboard access by default. Either:
+    <ul>
+      <li>turn off copy-on-select in <code>/settings</code> inside the agent, or</li>
+      <li>let the agent use the clipboard:
+<pre><code>cplt config set --global sandbox.deny_clipboard false   # permanently
+cplt --allow-clipboard                                 # this session only</code></pre>
+      The trade-off: the agent can then also <em>read</em> whatever you last copied (a password, a token …).</li>
+    </ul>
+  </li>
+</ol>
+</section>
+
+<!-- ============================================================ -->
+<section id="git">
+<h2>4. Git &amp; GitHub in the sandbox</h2>
+<p>The agent can commit, branch, fetch, rebase and push <em>its own branches</em>, and open PRs. It cannot push to <code>main</code>/<code>master</code>/the default branch, force push, or merge PRs — you merge.</p>
+<pre><code>git push origin HEAD:my-branch
+gh pr create --head my-branch</code></pre>
+<p><strong>The <code>-u</code> quirk on macOS:</strong> <code>.git/config</code> is read-only in the sandbox, so cplt strips <code>-u</code> from <code>git push -u</code> (you'll see <code>cplt: pushing without -u</code>) and sets the upstream itself when the session ends. If it can't, it prints a <code>git branch -u origin/my-branch my-branch</code> command for you to run outside cplt. Without a terminal, <code>gh pr create</code> won't push for you — push first, then pass <code>--head</code>.</p>
+<p><strong>Run these yourself, outside cplt</strong> (they write to protected git files):</p>
+<ul>
+  <li><code>git config</code> (incl. <code>--global</code>), <code>git remote add</code>, <code>git remote set-url</code></li>
+  <li><code>git branch -u</code> when cplt couldn't set the upstream</li>
+  <li><code>git clone</code>, <code>git init</code>, <code>git submodule add</code>, <code>git worktree add/remove</code></li>
+  <li>creating or changing git hooks</li>
+  <li>ktlint / detekt Gradle tasks (e.g. <code>./gradlew ktlintFormat</code>) — their worker processes don't pick up cplt's settings</li>
+</ul>
+<p>Commits made by the agent are <strong>unsigned</strong> (<code>~/.gnupg</code> and <code>~/.ssh</code> are closed).</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="packages">
+<h2>5. Private packages (GitHub Packages)</h2>
+<p>Many navikt libraries live in GitHub Packages, which needs a token — usually in <code>~/.gradle/gradle.properties</code>. cplt blocks that file on macOS, and Gradle stops when the file exists but can't be read (<code>Error when loading properties file …</code>). Options, safest first:</p>
+
+<p><strong>A. Use Nav's mirror (no token needed).</strong> An open mirror of the public packages:</p>
+<pre><code>// build.gradle.kts
+repositories {
+    mavenCentral()
+    maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
+}</code></pre>
+<p>Then remove the token from <code>gradle.properties</code> (or remove the file if it only held the token).</p>
+
+<p><strong>B. Let the agent read the one file.</strong> The agent can then read <em>every</em> token in it — use a token with only <code>read:packages</code>:</p>
+<pre><code>cplt config set allow.read ~/.gradle/gradle.properties</code></pre>
+<p>(<code>cplt config set sandbox.allow_build_credentials true --force</code> opens <code>gradle.properties</code>, <code>~/.m2/settings.xml</code> and <code>~/.npmrc</code> at once. Personal config only.)</p>
+
+<p><strong>C. Token from the environment.</strong> If the build reads <code>GITHUB_TOKEN</code>, Copilot receives it as set in your shell (other agents and <code>cplt exec</code> need <code>--pass-env GITHUB_TOKEN</code>).</p>
+
+<p><code>Received status code 401 from server: Unauthorized</code> means the request <em>got through</em> the network — the token is what's missing.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="docker">
+<h2>6. Docker &amp; Testcontainers</h2>
+<p>Docker is blocked: anyone who can talk to the Docker daemon can start a container that mounts your whole disk, which defeats the sandbox. So Testcontainers fails inside cplt. Options, safest first:</p>
+<ol>
+  <li><strong>Run container-based tests outside cplt.</strong> Let the agent run the rest (e.g. exclude integration tests via a Gradle task/tag).</li>
+  <li><strong>Start services yourself and open their ports</strong> — works for <code>docker compose</code>, not for Testcontainers (which starts its own containers):
+<pre><code>docker compose up -d                          # outside cplt
+cplt config set --repo allow.localhost 5432   # or personal config without --repo</code></pre></li>
+  <li><strong>Give the agent Docker</strong>, ideally for one session and only in a repo you trust. The agent can then do anything Docker can, and read <code>~/.docker</code> (registry logins). Testcontainers also needs random localhost ports:
+<pre><code>cplt --allow-docker --allow-localhost-any                   # one session
+cplt config set sandbox.allow_docker true --force           # permanently</code></pre>
+  With colima, keep <code>TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock</code> set as usual; cplt passes <code>DOCKER_HOST</code> and <code>TESTCONTAINERS_*</code> through.</li>
+</ol>
+</section>
+
+<!-- ============================================================ -->
+<section id="allowlist">
+<h2>7. Allowlist / strict mode</h2>
+<p>By default the network is <em>open except for a blocklist</em>. You can flip it to fail-closed, where only listed hosts are reachable:</p>
+<ul>
+  <li><code>proxy.default_allowlist = true</code> — the agent's own hosts (GitHub/Copilot) + common package registries (Maven Central, Gradle plugins, npm, PyPI, …).</li>
+  <li><code>proxy.allowed_domains = "~/.config/cplt/allowed-domains.txt"</code> — your own list file, one host per line, re-read every 5 s. Must live <em>outside</em> the project.</li>
+  <li><code>--preset strict</code> / <code>sandbox.preset = "strict"</code> — turns on the default allowlist <em>and</em> forces all traffic through the proxy, blocks <strong>every</strong> push, and ignores <code>allow_localhost_any</code> (so the Gradle daemon breaks unless you skip forced proxy).</li>
+</ul>
+<p>Add hosts to an active list with <code>allow.domains</code> (it extends a list; it does <em>not</em> turn one on). Subdomains are included.</p>
+<pre><code>cplt config set proxy.default_allowlist true
+
+# Gradle wrapper distribution (not in the default list)
+cplt config set allow.domains services.gradle.org
+cplt config set allow.domains release-assets.githubusercontent.com   # github.com is already allowed for Copilot
+
+# Toolchain download via foojay
+cplt config set allow.domains api.foojay.io
+
+# Nav's GitHub Packages mirror
+cplt config set allow.domains github-package-registry-mirror.gc.nav.no
+
+cplt config hosts --agent copilot     # see which hosts are always allowed</code></pre>
+<p><strong>Find the hosts your build needs:</strong> run it once without enforcing an allowlist and let cplt record what it contacted:</p>
+<pre><code>cplt --observe-domains exec -- ./gradlew build</code></pre>
+<p>Blocked-by-allowlist calls show up as <code>BLOCKED-ALLOWLIST</code> in the proxy log; <code>cplt check net &lt;host&gt;</code> tells you why and how to fix it. Escape hatch for one run: <code>--allow-all-domains</code>.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="trouble">
+<h2>8. Troubleshooting blocked resources</h2>
+
+<h3>First: ask cplt</h3>
+<pre><code>cplt check                                  # is the sandbox working at all?
+cplt check net example.com                  # ALLOWED / BLOCKED, with Reason: and often Fix:
+cplt check path ~/.config/git/work          # may the agent read/write this path?
+cplt check exec /bin/ps                     # may it execute this?
+cplt config set proxy.log_level blocked     # print blocked network calls live during the session
+cplt config explain sandbox.allow_env_files # what does a key do?
+cplt doctor --agent copilot                 # overall health check (paste this when reporting a bug)
+cplt --show-denials -- -p "…"               # stream macOS sandbox denials in real time</code></pre>
+<p>Rule of thumb: <strong>network</strong> problems appear in the proxy log; <strong>file / localhost / exec</strong> problems don't — use <code>cplt check path</code> / <code>--show-denials</code> for those. Remember changes apply from the next session. Use a flag (e.g. <code>--allow-read PATH</code>) to try something for one session before making it permanent.</p>
+
+<h3>Network</h3>
+
+<details id="t-website">
+<summary>The agent can't reach a website / API</summary>
+<p>Check first: <code>cplt check net api.example.com</code>. Then, depending on the reason:</p>
+<ul>
+  <li><strong><code>BLOCKED-ALLOWLIST</code></strong> — you have an allowlist on. Add the host: <code>cplt config set allow.domains api.example.com</code> (or append it to the file in <code>proxy.allowed_domains</code>; <code>cplt config get proxy.allowed_domains</code> shows which file).</li>
+  <li><strong>Built-in blocklist</strong> (pastebin, webhook.site, tunnels…) — blocked on purpose.</li>
+  <li><strong>Non-443 port</strong> (e.g. <code>:8443</code>) — <code>cplt config set allow.ports 8443</code>.</li>
+  <li><strong>Private IP</strong> — see next entry.</li>
+</ul>
+<p>Note: the proxy is not forced by default, so a tool that ignores <code>HTTPS_PROXY</code> may connect directly on 443 and bypass host rules.</p>
+</details>
+
+<details id="t-private">
+<summary><code>Failed to CONNECT: 403 Forbidden — Private target blocked by cplt</code> (internal Nav hosts)</summary>
+<p>The host resolves to a private IP (e.g. <code>repo.adeo.no</code>, <code>*.intern.nav.no</code>). The proxy log shows <code>BLOCKED-PRIVATE</code>. This also hits Gradle/Maven repos, since the JVM goes through the proxy. Allow by DNS name (covers subdomains):</p>
+<pre><code>cplt config set proxy.allow_private_domains repo.adeo.no
+cplt config set proxy.allow_private_domains intern.nav.no
+# one session only:
+cplt --allow-private-domain repo.adeo.no
+# for the whole team: --repo, commit, cplt trust accept</code></pre>
+<p>URLs written as a raw IP (<code>https://10.20.30.40/…</code>) <strong>cannot</strong> be allowed by any setting — use the hostname. If you also have an allowlist, the domain must be on it too.</p>
+</details>
+
+<details>
+<summary><code>Unable to download toolchain</code> (Gradle foojay)</summary>
+<p>Looks like a network error but is usually a write block: <code>~/.gradle/jdks</code> is read-only in the sandbox. Run the build once outside cplt so the JDK is already there, or use an installed JDK and disable auto-download in the project's <code>gradle.properties</code>:</p>
+<pre><code>org.gradle.java.installations.auto-download=false</code></pre>
+<p>With an allowlist, also add <code>api.foojay.io</code> and <code>release-assets.githubusercontent.com</code>.</p>
+</details>
+
+<h3>Localhost</h3>
+
+<details>
+<summary><code>connect EPERM 127.0.0.1:…</code> / <code>Connection refused</code> to a local service</summary>
+<p>Localhost is closed on macOS. Open one port for a fixed-port service, or all ports for tools that use random ports:</p>
+<pre><code>cplt config set allow.localhost 5432
+cplt config set sandbox.allow_localhost_any true</code></pre>
+<p>Use <code>allow.localhost</code>, not <code>allow.ports</code> — the latter opens a port to the internet and doesn't cover localhost on macOS. Note the agent can still <em>start</em> your Spring Boot app and you can open it in your browser; it's only the agent connecting to it that needs this.</p>
+</details>
+
+<details>
+<summary><code>Could not connect to the Gradle daemon</code> / <code>ConnectException: Could not connect to server</code></summary>
+<p>The Gradle and Kotlin daemons talk over random localhost ports. <code>--no-daemon</code> doesn't help. Fix: <code>cplt config set sandbox.allow_localhost_any true</code>. If you see only <code>Last 20 lines from daemon log file</code>, the real error is further up.</p>
+<p>Still failing with <code>addresses:[/127.0.0.1]</code>? Usually ktlint or detekt — run those tasks outside cplt.</p>
+</details>
+
+<details>
+<summary>IntelliJ MCP tools don't show up / fail to connect</summary>
+<p>Make sure the MCP server is enabled in IntelliJ, IntelliJ is running, and the port in <code>~/.copilot/mcp-config.json</code> matches (64342 for the first IDE). Then <code>cplt config set allow.localhost 64342</code> and start a new session. Verify with <code>/mcp</code> in Copilot.</p>
+</details>
+
+<h3>Files &amp; programs</h3>
+
+<details>
+<summary><code>Operation not permitted</code>, <code>EPERM</code> or <code>EACCES</code> on some path</summary>
+<p>Run <code>cplt check path &lt;path&gt;</code>. Then grant the narrowest thing that works:</p>
+<pre><code>cplt config set allow.read  ~/some/file-or-dir     # read-only
+cplt config set allow.write ~/some/dir             # read/write, NOT executable
+cplt --allow-read ~/some/file                      # one session only</code></pre>
+<p>Some paths can never be opened (<code>~/.netrc</code>, <code>~/.git-credentials</code>, <code>~/.config/cplt</code> …). Common cases follow.</p>
+</details>
+
+<details id="t-includeif">
+<summary><code>fatal: unable to access '~/.config/git/work': Operation not permitted</code> (gitconfig include)</summary>
+<p>Your git config has an <code>include</code>/<code>includeIf</code> pointing to another file. The agent can read only <code>~/.gitconfig</code> and <code>~/.config/git/{config,ignore,attributes}</code>, and git aborts when an include can't be read. Grant the specific file (not the folder):</p>
+<pre><code>cplt config set allow.read ~/.config/git/work</code></pre>
+<p>Repeat for each included file. A symlinked (stowed) <code>~/.gitconfig</code> is followed automatically.</p>
+</details>
+
+<details>
+<summary><code>Error when loading properties file=…/.gradle/gradle.properties (Operation not permitted)</code></summary>
+<p>The file is blocked because it usually contains tokens. See <a href="#packages">Private packages</a>: move to Nav's mirror and remove the token, or <code>cplt config set allow.read ~/.gradle/gradle.properties</code>.</p>
+</details>
+
+<details>
+<summary><code>Could not self-attach to current VM using external process</code></summary>
+<p>MockK/Mockito/ByteBuddy need the JVM attach socket. <code>cplt config set sandbox.allow_jvm_attach true</code> (opens only <code>/tmp/.java_pid&lt;PID&gt;</code>).</p>
+</details>
+
+<details>
+<summary><code>Operation not permitted</code> while the JVM is starting</summary>
+<p>Some JVM libraries load native code from the system temp dir before cplt redirects it. Only if the error is at JVM <em>startup</em>:</p>
+<pre><code>cplt config set sandbox.allow_tmp_exec true --force</code></pre>
+</details>
+
+<details>
+<summary>JDK under <code>~/Library/Java/JavaVirtualMachines</code> doesn't work</summary>
+<p>Not supported yet. Point <code>JAVA_HOME</code> at a JDK installed via mise, SDKMAN, jenv or under <code>/Library/Java/JavaVirtualMachines</code>.</p>
+</details>
+
+<details>
+<summary><code>failed create_dir_all ~/.local/share/mise/installs/…: Operation not permitted</code></summary>
+<p>A tool version is missing and the agent may not install it (on purpose — a binary the agent downloads could escape the sandbox). Run <code>mise install</code> outside cplt. <code>mise run</code> and already-installed tools work fine.</p>
+</details>
+
+<details>
+<summary>Spring Boot / dotenv can't read <code>.env</code> files, or <code>fatal: cannot hash .env.local</code></summary>
+<p><code>.env*</code>, <code>.pem</code>, <code>.key</code> files are blocked for read and write. If the project needs them (the agent can then read all secrets in them):</p>
+<pre><code>cplt config set sandbox.allow_env_files true   # always
+cplt --allow-env-files                         # this session</code></pre>
+<p><code>cannot hash</code> means a secrets file is tracked in git — untrack it: <code>git rm --cached .env.local &amp;&amp; echo ".env.local" &gt;&gt; .gitignore</code>.</p>
+</details>
+
+<details>
+<summary><code>execvp() of /bin/ps failed</code> / <code>openpty: Operation not permitted</code></summary>
+<p>setuid programs (<code>ps</code>, <code>top</code>, <code>sudo</code>) and programs creating their own terminal (<code>script</code>, <code>tmux</code>, <code>screen</code>) can't run in the sandbox. No setting changes this — run them outside cplt.</p>
+</details>
+
+<details>
+<summary><code>Operation not permitted</code> in <code>~/Desktop</code> or <code>~/Documents</code></summary>
+<p>That's macOS privacy protection (TCC), not cplt. Give your terminal Full Disk Access in System Settings → Privacy &amp; Security, or copy the file into the project.</p>
+</details>
+
+<h3>Git &amp; GitHub</h3>
+
+<details>
+<summary><code>error: could not write config file .git/config: Operation not permitted</code></summary>
+<p><code>.git/config</code> is read-only (it can make git run code outside the sandbox). See <a href="#git">Git &amp; GitHub</a> for the <code>-u</code> behaviour. Run <code>git config</code>/<code>git remote</code> commands outside cplt.</p>
+</details>
+
+<details>
+<summary><code>BLOCKED by sandbox: 'git push' is not allowed in this environment.</code></summary>
+<p>Push to default branch or force push. Push to a feature branch: <code>git push origin HEAD:my-branch</code>. If even a new branch is blocked with <code>the default branch of remote 'origin' could not be determined</code>, run outside cplt: <code>git remote set-head origin -a</code>, then start a new session.</p>
+</details>
+
+<details>
+<summary><code>BLOCKED by sandbox: 'git remote' would change a remote's URL.</code></summary>
+<p>Changing <code>origin</code> (or <code>url.*.insteadOf</code>) is always blocked — the gh guard uses <code>origin</code> to decide which repo the agent may touch. Do it outside cplt. If your <em>tests</em> create repos with an <code>origin</code>, run them with <code>cplt --no-git-guard exec -- &lt;command&gt;</code>.</p>
+</details>
+
+<details>
+<summary><code>which is outside the startup repo</code> (gh)</summary>
+<p>The gh guard limits the agent to the repo it was started in. To add another: <code>cplt link navikt/other-repo</code>.</p>
+</details>
+
+<details>
+<summary><code>Permission denied (publickey)</code></summary>
+<p>SSH keys are blocked. Switch to HTTPS, outside cplt:</p>
+<pre><code>git remote set-url origin https://github.com/navikt/&lt;repo&gt;.git
+(unset GH_TOKEN GITHUB_TOKEN COPILOT_GITHUB_TOKEN GH_HOST GH_REPO; gh auth setup-git --hostname github.com)</code></pre>
+</details>
+
+<details>
+<summary><code>aborted: you must first push the current branch to a remote, or use the --head flag</code></summary>
+<pre><code>git push origin HEAD:my-branch
+gh pr create --head my-branch</code></pre>
+</details>
+
+<h3>Login &amp; Copilot</h3>
+
+<details>
+<summary><code>System vault not available</code>, or <code>/login</code> wants to store the token in plain text</summary>
+<p>cplt closes the Keychain when it hands Copilot your <code>gh</code> token, so <code>/login</code> inside the sandbox can't save. Choose <em>No, cancel sign-in</em>, exit, and log in outside cplt:</p>
+<pre><code>(
+  unset COPILOT_GITHUB_TOKEN GH_TOKEN GITHUB_TOKEN GH_HOST GH_REPO
+  gh auth login --hostname github.com &amp;&amp;
+  gh auth status --hostname github.com
+)
+# then, from the repo:
+(unset COPILOT_GITHUB_TOKEN GH_TOKEN GITHUB_TOKEN GH_HOST GH_REPO; cplt doctor --agent copilot; copilot)</code></pre>
+<p>Check that <code>gh</code> shows the right account and <code>(keyring)</code>, and that this account has Copilot at <a href="https://github.com/settings/copilot">github.com/settings/copilot</a>. A stale exported <code>GH_TOKEN</code> wins over the keychain and breaks sign-in — <code>cplt doctor</code> warns about it.</p>
+</details>
+
+<details>
+<summary>Copilot hangs right after startup</summary>
+<p>If your organisation's managed Copilot policy <em>requires</em> Copilot's own sandbox, cplt can't turn it off and the two collide. Check with <code>cplt doctor --agent copilot</code> and raise it with whoever manages the policy.</p>
+</details>
+
+<h3>Version &amp; config</h3>
+
+<details>
+<summary><code>unknown config key</code> / <code>.cplt.toml uses a key this version of cplt does not understand</code> / <code>unexpected argument</code></summary>
+<p>Your cplt is older than the docs or the repo's config. <code>brew upgrade navikt/tap/cplt</code>, and check <code>which -a cplt</code> for a stale copy (e.g. in <code>~/.local/bin</code>). Validate your own config with <code>cplt config validate</code>. If you have an old <code>[audit]</code> section in your config, delete it (use <code>proxy.log_file</code> instead).</p>
+</details>
+
+<details>
+<summary>Reporting a bug</summary>
+<p>Paste the output of <code>cplt doctor</code> (it shows home as <code>~</code> and tokens by name only) plus the failing command in an issue at <a href="https://github.com/navikt/cplt/issues">navikt/cplt</a>. Don't paste <code>--verbose</code> output publicly; it has full paths.</p>
+</details>
+</section>
+
+<!-- ============================================================ -->
+<section id="cheat">
+<h2>9. Cheat sheet</h2>
+<table>
+  <thead><tr><th>I need the agent to…</th><th>Setting</th><th>Put it in</th></tr></thead>
+  <tbody>
+    <tr><td>reach a site on port 443 (allowlist on)</td><td><code>allow.domains example.com</code></td><td>👤 Personal</td></tr>
+    <tr><td>reach an internal Nav host the build needs</td><td><code>proxy.allow_private_domains intern.nav.no</code></td><td>📁 Repo</td></tr>
+    <tr><td>use a non-443 port the project needs</td><td><code>allow.ports 8443</code></td><td>📁 Repo</td></tr>
+    <tr><td>reach a project service on a fixed port (DB from compose)</td><td><code>allow.localhost 5432</code></td><td>📁 Repo</td></tr>
+    <tr><td>reach a machine tool on a fixed port (IntelliJ MCP)</td><td><code>allow.localhost 64342</code></td><td>👤 Personal</td></tr>
+    <tr><td>run Gradle / tools using random local ports</td><td><code>sandbox.allow_localhost_any true</code></td><td>📁 Repo (👤 if all your repos are Gradle)</td></tr>
+    <tr><td>run MockK / Mockito inline</td><td><code>sandbox.allow_jvm_attach true</code></td><td>📁 Repo (👤 if all your repos need it)</td></tr>
+    <tr><td>read a file outside the project (e.g. gitconfig include)</td><td><code>allow.read ~/path</code></td><td>👤 Personal</td></tr>
+    <tr><td>write outside the project</td><td><code>allow.write ~/path</code></td><td>👤 Personal</td></tr>
+    <tr><td>read <code>.env</code> files</td><td><code>sandbox.allow_env_files true</code></td><td>👤 Personal or ⏱ session</td></tr>
+    <tr><td>read Gradle/Maven/npm token files</td><td><code>sandbox.allow_build_credentials true</code> <span class="tag force">--force</span></td><td>👤 Personal only</td></tr>
+    <tr><td>execute from temp at JVM startup</td><td><code>sandbox.allow_tmp_exec true</code> <span class="tag force">--force</span></td><td>👤 Personal only</td></tr>
+    <tr><td>use Docker / Testcontainers</td><td><code>sandbox.allow_docker true</code> <span class="tag force">--force</span></td><td>⏱ Session (<code>--allow-docker</code>), else 👤 — never 📁</td></tr>
+    <tr><td>see an env var</td><td><code>sandbox.pass_env MY_VAR</code></td><td>👤 Personal</td></tr>
+    <tr><td>use the clipboard (copy-on-select)</td><td><code>sandbox.deny_clipboard false</code> — see <a href="#copy">Copying text</a></td><td>👤 Personal</td></tr>
+    <tr><td>work in another repo</td><td><code>cplt link navikt/other-repo</code></td><td>👤 Personal (command)</td></tr>
+  </tbody>
+</table>
+<p class="legend"><small>👤 Personal = <code>~/.config/cplt/config.toml</code> via <code>cplt config set …</code> · 📁 Repo = <code>.cplt.toml</code> via <code>cplt config set --repo …</code>, commit, <code>cplt trust accept</code> · ⏱ Session = a CLI flag for one run.<br>
+Rule of thumb: <strong>the project needs it → repo</strong>; <strong>it's about your machine, your home directory or your secrets → personal</strong>; <strong>it's risky → session</strong>.</small></p>
+<p><strong>How to apply any of these:</strong></p>
+<ul>
+  <li><strong>Personal (all repos):</strong> <code>cplt config set &lt;key&gt; &lt;value&gt;</code></li>
+  <li><strong>Team (this repo):</strong> add <code>--repo</code> → proposes it in <code>.cplt.toml</code>; commit, then <code>cplt trust accept</code></li>
+  <li><strong>Remove a value:</strong> add <code>--unset</code></li>
+  <li><strong>One session only:</strong> use the matching flag instead:
+    <ul>
+      <li><code>--allow-localhost 5432</code></li>
+      <li><code>--allow-read PATH</code></li>
+      <li><code>--allow-port 8443</code></li>
+      <li><code>--allow-docker</code></li>
+      <li><code>--allow-env-files</code></li>
+      <li><code>--pass-env VAR</code></li>
+    </ul>
+  </li>
+  <li><strong>Takes effect:</strong> from the next session</li>
+</ul>
+</section>
+
+</main>
+
+<footer class="container">
+  <hr>
+  <p>Sources (Norwegian unless noted):
+    <a href="https://ki-utvikling.nav.no/nav-pilot/guider/kom-i-gang">Kom i gang</a> ·
+    <a href="https://ki-utvikling.nav.no/nav-pilot/guider/cplt-oppsett">cplt-oppsett</a> ·
+    <a href="https://ki-utvikling.nav.no/nav-pilot/guider/cplt-gradle">cplt-gradle</a> ·
+    <a href="https://ki-utvikling.nav.no/nav-pilot/guider/mcp-gjennom-cplt">MCP gjennom cplt</a> ·
+    <a href="https://ki-utvikling.nav.no/nav-pilot/guider/cplt-nettverk">cplt-nettverk</a> ·
+    <a href="https://ki-utvikling.nav.no/nav-pilot/guider/cplt-feilmeldinger">cplt-feilmeldinger</a> ·
+    <a href="https://ki-utvikling.nav.no/nav-pilot/guider/cplt-git">cplt-git</a> ·
+    <a href="https://ki-utvikling.nav.no/cplt">ki-utvikling.nav.no/cplt</a> (English) ·
+    <a href="https://github.com/navikt/cplt/blob/main/README.md">cplt README</a> (English) ·
+    <a href="https://www.jetbrains.com/help/idea/mcp-server.html">IntelliJ MCP Server docs</a>.
+  </p>
+</footer>
+
+<script>
+  document.querySelectorAll('pre').forEach(pre => {
+    const btn = document.createElement('button');
+    btn.className = 'copy secondary outline';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', () => {
+      const text = pre.querySelector('code').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied';
+        setTimeout(() => btn.textContent = 'Copy', 1200);
+      });
+    });
+    pre.appendChild(btn);
+  });
+  // Follow the system colour scheme
+  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+</body>
+</html>
